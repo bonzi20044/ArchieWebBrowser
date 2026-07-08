@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Archie · Поиск + Википедия</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz@14..32&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #ffffff;
+            min-height: 100vh;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 0;
+            margin: 0;
+        }
+
+        .app-wrapper {
+            max-width: 1000px;
+            width: 100%;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 18px 12px 28px;
+            opacity: 0;
+            animation: fadeIn 1.2s ease forwards;
+        }
+
+        /* ПЛАВНОЕ ПОЯВЛЕНИЕ ИЗ ЧЁРНОГО ЭКРАНА */
+        @keyframes fadeIn {
+            0% {
+                opacity: 0;
+                background: #000000;
+            }
+            30% {
+                opacity: 0.2;
+                background: #000000;
+            }
+            60% {
+                opacity: 0.6;
+                background: #0a0a0a;
+            }
+            100% {
+                opacity: 1;
+                background: #ffffff;
+            }
+        }
+
+        /* ШАПКА */
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 4px 16px 4px;
+            flex-wrap: wrap;
+        }
+
+        .brand-pic {
+            flex-shrink: 0;
+            width: 52px;
+            height: 52px;
+            background: transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .brand-pic img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .brand-pic .fallback-icon {
+            color: #2c3e50;
+            font-size: 26px;
+            font-weight: 300;
+            letter-spacing: 2px;
+        }
+
+        .brand-title {
+            font-size: 34px;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+            color: #4a90d9;
+            line-height: 1.1;
+            word-break: break-word;
+        }
+
+        /* ПОИСК GOOGLE - БЕЗ ЛИНИЙ */
+        .search-section {
+            margin: 12px 0 50px;
+            padding: 4px 0;
+            min-height: 60px;
+        }
+
+        .gcse-search {
+            width: 100%;
+        }
+
+        /* СТАТЬИ ВИКИПЕДИИ - БЕЗ ЛИНИЙ */
+        .news-section {
+            margin-top: 20px;
+            padding-top: 0;
+        }
+
+        .news-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 14px;
+            padding: 0 4px;
+        }
+
+        .news-header h2 {
+            color: #1a2634;
+            font-weight: 500;
+            font-size: 18px;
+            letter-spacing: 0.3px;
+            border-left: 3px solid #4a90d9;
+            padding-left: 12px;
+        }
+
+        .news-badge {
+            background: #f0f0f0;
+            padding: 6px 14px;
+            color: #2c3e50;
+            font-size: 12px;
+            font-weight: 400;
+            letter-spacing: 0.3px;
+            border: none;
+        }
+
+        .news-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .news-card {
+            background: #fafafa;
+            padding: 16px 18px;
+            border-left: 3px solid #4a90d9;
+            transition: background 0.15s;
+        }
+
+        .news-card:hover {
+            background: #f0f0f0;
+        }
+
+        .news-card .news-source {
+            font-size: 12px;
+            color: #5a6f87;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .news-card .news-source span {
+            background: #e8e8e8;
+            padding: 2px 12px;
+            font-size: 10px;
+            color: #1a2a3a;
+        }
+
+        .news-card h3 {
+            color: #0b1a2a;
+            font-weight: 500;
+            font-size: 17px;
+            line-height: 1.4;
+            margin: 6px 0 4px;
+        }
+
+        .news-card .news-desc {
+            color: #2d4055;
+            font-size: 14px;
+            line-height: 1.5;
+            opacity: 0.8;
+            margin-top: 4px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .news-card .news-desc a {
+            color: #4a90d9;
+            text-decoration: none;
+        }
+
+        .news-card .news-desc a:hover {
+            text-decoration: underline;
+        }
+
+        .news-card .news-meta {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 14px;
+            color: #5a6f87;
+            font-size: 12px;
+            padding-top: 8px;
+            border-top: none !important;
+        }
+
+        .news-meta .news-date {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* Адаптивность */
+        @media (min-width: 640px) {
+            .app-wrapper {
+                padding: 24px 28px 36px;
+            }
+            .header-brand {
+                gap: 18px;
+            }
+            .brand-pic {
+                width: 68px;
+                height: 68px;
+            }
+            .brand-title {
+                font-size: 44px;
+            }
+            .news-grid {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 18px;
+            }
+            .news-card h3 {
+                font-size: 18px;
+            }
+            .search-section {
+                margin: 12px 0 60px;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .app-wrapper {
+                padding: 30px 40px 40px;
+            }
+            .brand-title {
+                font-size: 52px;
+            }
+            .brand-pic {
+                width: 80px;
+                height: 80px;
+            }
+            .news-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .search-section {
+                margin: 12px 0 70px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .brand-title {
+                font-size: 28px;
+            }
+            .brand-pic {
+                width: 46px;
+                height: 46px;
+            }
+            .news-card {
+                padding: 14px 14px;
+            }
+            .search-section {
+                margin: 8px 0 40px;
+            }
+        }
+
+        /* =============================================== */
+        /* СТИЛИ ДЛЯ ПОИСКА - БЕЗ ВСЕХ ЛИНИЙ И РАМОК */
+        /* =============================================== */
+        .gsc-control-cse {
+            background: #ffffff !important;
+            border: none !important;
+            padding: 0 !important;
+            box-shadow: none !important;
+        }
+
+        .gsc-search-box {
+            background: #ffffff !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            border: none !important;
+            box-shadow: none !important;
+        }
+
+        .gsc-input-box {
+            background: #ffffff !important;
+            border: none !important;
+            border-radius: 0 !important;
+            padding: 0 16px !important;
+            height: 44px !important;
+            box-shadow: none !important;
+            border-bottom: none !important;
+        }
+
+        .gsc-input-box:focus-within {
+            border-bottom: none !important;
+            box-shadow: none !important;
+        }
+
+        .gsc-input {
+            background: #ffffff !important;
+            color: #1a2634 !important;
+            font-size: 15px !important;
+            padding: 8px 0 !important;
+            height: 42px !important;
+            border: none !important;
+            outline: none !important;
+            box-shadow: none !important;
+        }
+
+        .gsc-input::placeholder {
+            color: #999999 !important;
+        }
+
+        .gsc-search-button {
+            background: transparent !important;
+            border: none !important;
+            border-radius: 0 !important;
+            padding: 0 16px !important;
+            height: 44px !important;
+            margin-left: 0 !important;
+            cursor: pointer !important;
+            box-shadow: none !important;
+            border-bottom: none !important;
+        }
+
+        .gsc-search-button:hover {
+            background: #f0f0f0 !important;
+        }
+
+        .gsc-search-button-v2 {
+            background: transparent !important;
+            border: none !important;
+            padding: 0 !important;
+            box-shadow: none !important;
+        }
+
+        .gsc-search-button-v2 svg {
+            fill: #2c3e50 !important;
+        }
+
+        .gsc-tabsArea,
+        .gsc-refinementsArea,
+        .gsc-above-wrapper-area,
+        .gsc-adBlock,
+        .gsc-clear-button {
+            display: none !important;
+        }
+
+        .gsc-results-wrapper-overlay {
+            background: #ffffff !important;
+            border: none !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            padding: 16px 0 !important;
+            margin-top: 8px !important;
+        }
+
+        .gsc-results .gsc-result {
+            background: #ffffff !important;
+            border-bottom: 1px solid #e8e8e8 !important;
+            padding: 12px 0 !important;
+            box-shadow: none !important;
+        }
+
+        .gsc-results .gsc-result:last-child {
+            border-bottom: none !important;
+        }
+
+        .gsc-result .gs-title {
+            color: #1a2634 !important;
+            font-weight: 500 !important;
+            text-decoration: none !important;
+        }
+
+        .gsc-result .gs-title:hover {
+            text-decoration: underline !important;
+        }
+
+        .gsc-result .gs-snippet {
+            color: #2d4055 !important;
+        }
+
+        .gsc-result .gs-visibleUrl {
+            color: #4a90d9 !important;
+        }
+
+        .gsc-results .gsc-cursor-box {
+            border: none !important;
+            box-shadow: none !important;
+        }
+        
+        .gsc-results .gsc-cursor-page {
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+        }
+
+        @media (max-width: 480px) {
+            .gsc-input-box {
+                height: 40px !important;
+                padding: 0 12px !important;
+            }
+            .gsc-input {
+                font-size: 14px !important;
+                height: 38px !important;
+            }
+            .gsc-search-button {
+                height: 40px !important;
+                padding: 0 12px !important;
+            }
+        }
+
+        /* СТИЛИ ДЛЯ КАСТОМНОЙ ФОРМЫ ПОИСКА (ЗАПАСНОЙ ВАРИАНТ) - БЕЗ ЛИНИЙ */
+        .custom-search-wrapper {
+            display: none;
+            margin: 10px 0;
+        }
+
+        .custom-search-wrapper.active {
+            display: block;
+        }
+
+        .custom-search-form {
+            display: flex;
+            align-items: center;
+            width: 100%;
+        }
+
+        .custom-search-input {
+            flex: 1;
+            padding: 10px 16px;
+            font-size: 15px;
+            border: none;
+            border-bottom: none !important;
+            outline: none;
+            background: #ffffff;
+            font-family: 'Inter', sans-serif;
+            height: 44px;
+        }
+
+        .custom-search-input:focus {
+            border-bottom: none !important;
+        }
+
+        .custom-search-button {
+            padding: 10px 20px;
+            background: transparent;
+            border: none;
+            border-bottom: none !important;
+            cursor: pointer;
+            height: 44px;
+            font-family: 'Inter', sans-serif;
+            font-size: 15px;
+            color: #2c3e50;
+            transition: background 0.2s;
+        }
+
+        .custom-search-button:hover {
+            background: #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-wrapper">
+
+        <!-- ШАПКА -->
+        <div class="header-brand">
+            <div class="brand-pic">
+                <img src="https://i.ibb.co/mF08fsp/archie-logo-icon.png" alt="Archie logo"
+                onerror="this.style.display='none'; this.parentElement.innerHTML='<span class=\'fallback-icon\'>A</span>';">
+            </div>
+            <div class="brand-title">Archie</div>
+        </div>
+
+        <!-- ПОИСК GOOGLE CSE -->
+        <div class="search-section" id="searchSection">
+            <script async src="https://cse.google.com/cse.js?cx=96840774a4f224bb2">
+            </script>
+            <div class="gcse-search" id="gcseSearch"></div>
+            
+            <!-- ЗАПАСНАЯ ФОРМА ПОИСКА (ЕСЛИ GOOGLE CSE НЕ ЗАГРУЗИЛСЯ) -->
+            <div class="custom-search-wrapper" id="customSearchWrapper">
+                <form class="custom-search-form" id="customSearchForm" action="https://www.google.com/search" method="get" target="_blank">
+                    <input type="text" class="custom-search-input" name="q" placeholder="Поиск в Google..." id="customSearchInput">
+                    <input type="hidden" name="cx" value="96840774a4f224bb2">
+                    <button type="submit" class="custom-search-button">Найти</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- СТАТЬИ ВИКИПЕДИИ -->
+        <div class="news-section">
+            <div class="news-header">
+                <h2>📰 Свежие статьи Википедии</h2>
+                <span class="news-badge">• API</span>
+            </div>
+            <div class="news-grid" id="newsContainer">
+                <div class="news-card">
+                    <div class="news-source">⏳ Загрузка <span>статей</span></div>
+                    <h3>Получение данных из Википедии...</h3>
+                    <div class="news-desc">Запрос к API свежих правок</div>
+                    <div class="news-meta"><span>▪️ Wikipedia</span><span>сейчас</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            "use strict";
+
+            // ========== НОВОСТИ ВИКИПЕДИИ ==========
+            const container = document.getElementById('newsContainer');
+            const WIKI_API_URL =
+                'https://ru.wikipedia.org/w/api.php?action=query&list=recentchanges&rcnamespace=0&rcprop=title|sizes|user|timestamp|comment&rctype=new&rclimit=15&format=json&origin=*';
+
+            function fetchWikipediaArticles() {
+                fetch(WIKI_API_URL)
+                    .then(response => {
+                        if (!response.ok) throw new Error('Ошибка сети: ' + response.status);
+                        return response.json();
+                    })
+                    .then(data => {
+                        const changes = data.query?.recentchanges || [];
+                        if (changes.length === 0) {
+                            showEmptyState('Нет свежих статей');
+                            return;
+                        }
+
+                        const articles = changes.map(item => ({
+                            title: item.title || 'Без названия',
+                            description: `${item.comment || 'Новая статья'} (размер: ${item.newlen || 0} байт)`,
+                            user: item.user || 'аноним',
+                            timestamp: item.timestamp || '',
+                            link: `https://ru.wikipedia.org/wiki/${encodeURIComponent(item.title || '')}`
+                        }));
+
+                        renderArticles(articles);
+                    })
+                    .catch(error => {
+                        console.warn('Ошибка загрузки Википедии:', error);
+                        showEmptyState('Не удалось загрузить статьи Википедии');
+                    });
+            }
+
+            function showEmptyState(message) {
+                container.innerHTML = `
+                        <div class="news-card">
+                            <div class="news-source">ℹ️ <span>информация</span></div>
+                            <h3>${message}</h3>
+                            <div class="news-desc">Попробуйте обновить страницу позже</div>
+                            <div class="news-meta"><span>▪️ Wikipedia</span><span>сейчас</span></div>
+                        </div>
+                    `;
+            }
+
+            function formatDate(timestamp) {
+                if (!timestamp) return 'сегодня';
+                try {
+                    const date = new Date(timestamp);
+                    return date.toLocaleDateString('ru-RU', {
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                } catch {
+                    return 'сегодня';
+                }
+            }
+
+            function renderArticles(articles) {
+                if (!container) return;
+                container.innerHTML = '';
+
+                articles.forEach(item => {
+                    const card = document.createElement('div');
+                    card.className = 'news-card';
+
+                    const sourceDiv = document.createElement('div');
+                    sourceDiv.className = 'news-source';
+                    sourceDiv.innerHTML = `<span>Википедия</span>`;
+
+                    const titleH3 = document.createElement('h3');
+                    titleH3.textContent = item.title || 'Статья';
+
+                    const descP = document.createElement('div');
+                    descP.className = 'news-desc';
+                    if (item.link) {
+                        descP.innerHTML =
+                            `<a href="${item.link}" target="_blank" rel="noopener">${item.description || 'Читать статью'}</a>`;
+                    } else {
+                        descP.textContent = item.description || '';
+                    }
+
+                    const metaDiv = document.createElement('div');
+                    metaDiv.className = 'news-meta';
+                    const dateSpan = document.createElement('span');
+                    dateSpan.className = 'news-date';
+                    dateSpan.textContent = formatDate(item.timestamp);
+                    const userSpan = document.createElement('span');
+                    userSpan.textContent = `👤 ${item.user || 'аноним'}`;
+
+                    metaDiv.appendChild(dateSpan);
+                    metaDiv.appendChild(userSpan);
+
+                    card.appendChild(sourceDiv);
+                    card.appendChild(titleH3);
+                    card.appendChild(descP);
+                    card.appendChild(metaDiv);
+
+                    container.appendChild(card);
+                });
+            }
+
+            // ========== ЗАГРУЗКА НОВОСТЕЙ ==========
+            window.addEventListener('load', function() {
+                setTimeout(fetchWikipediaArticles, 600);
+            });
+
+            setTimeout(function() {
+                if (container && container.children.length <= 1) {
+                    fetchWikipediaArticles();
+                }
+            }, 3000);
+
+            // ========== ЗАПАСНОЙ ВАРИАНТ ПОИСКА ==========
+            setTimeout(function() {
+                const gcseSearch = document.getElementById('gcseSearch');
+                const customWrapper = document.getElementById('customSearchWrapper');
+                
+                if (gcseSearch && gcseSearch.children.length === 0) {
+                    customWrapper.classList.add('active');
+                } else {
+                    const hasContent = gcseSearch.querySelector('iframe, input, .gsc-control-cse');
+                    if (!hasContent) {
+                        customWrapper.classList.add('active');
+                    }
+                }
+            }, 3000);
+
+            setTimeout(function() {
+                const gcseSearch = document.getElementById('gcseSearch');
+                const customWrapper = document.getElementById('customSearchWrapper');
+                
+                if (gcseSearch && gcseSearch.children.length === 0) {
+                    customWrapper.classList.add('active');
+                }
+            }, 5000);
+
+        })();
+    </script>
+</body>
+</html>
